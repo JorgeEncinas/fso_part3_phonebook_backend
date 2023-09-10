@@ -1,3 +1,4 @@
+require("dotenv").config()
 const express = require("express")
 const app = express()
 const morgan = require("morgan")
@@ -11,8 +12,8 @@ morgan.token("post",
         }
         return contentString
 })
-
 const morganNewTiny = morgan(":method :url :status :res[content-length] - :response-time ms :post")
+const Person = require("./models/person")
 
 app.use(express.json())
 app.use(morganNewTiny)
@@ -43,26 +44,37 @@ let persons = [
 ]
 
 app.get("/api/persons", (request, response) => {
-    return response.json(persons)
+    Person.find({}).then(persons => {
+        return response.json(persons)
+    })
 })
 
 app.get("/info", (request, response) => {
-    const info = `
+    Person.find({}).then(persons => {
+        const info = `
         <p>Phonebook has info for ${persons.length} ${persons.length === 1 ? "person" : "people"}</p>
         <p>Request made on: ${Date()}</p>
     `
     response.set("Content-Type", "text/html")
     return response.send(info)
+    })
+    .catch(error => {
+        console.log("Error on info:", error.message)
+    })
 })
 
 app.get("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    if (person) {
-        return response.json(person)
-    }
-    response.status(404)
-    return response.end()
+    Person.findById(request.params.id)
+        .then(retrievedPerson => {
+            if(retrievedPerson) {
+                return response.json(retrievedPerson)
+            } else {
+                return response.status(404).end()
+            }
+        })
+        .catch(error => {
+            console.log("Error fetching person:", error.message)
+        })
 })
 
 app.delete("/api/persons/:id", (request, response) => {
