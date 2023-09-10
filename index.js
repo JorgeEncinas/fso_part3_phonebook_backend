@@ -92,6 +92,7 @@ const generateId = () => {
     return Math.floor(Math.random()*100000)
 }
 
+
 app.post("/api/persons", (request, response) => {
     const body = request.body
     if(!body) {
@@ -99,28 +100,19 @@ app.post("/api/persons", (request, response) => {
             error:"No body."
         })
     }
-
     if (body.number === undefined || body.name === undefined
         || body.number === null || body.name === null) {
         return response.status(400).json({
             error: "Requires both 'name' and 'number'"
         })
     } else {
-        const nameExists = persons.find(person => {
-            return person.name === body.name
-        })
-        if (nameExists) {
-            return response.status(400).json({
-                error: "name is already registered"
-            })
-        }
-        const newPerson =   {
-            id: generateId(),
+        const newPerson = Person({
             name: body.name,
             number: body.number
-        } 
-        persons.push(newPerson)
-        return response.status(200).json(newPerson)
+        })
+        newPerson.save().then(savedPerson => {
+            return response.json(savedPerson)
+        })
     }
 })
 
